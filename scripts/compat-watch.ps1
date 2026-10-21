@@ -131,18 +131,31 @@ function Invoke-CompatCheck([string]$Exe, [string]$Dll, [string]$Channel, [int64
     if (-not (Test-Path -LiteralPath $Exe)) {
         throw "cr_compat_check.exe no encontrado: $Exe"
     }
-    $out = Join-Path $env:TEMP ('cr_compat_' + [Guid]::NewGuid().ToString('N') + '.json')
+    $id = [Guid]::NewGuid().ToString('N')
+    $out = Join-Path $env:TEMP ("cr_compat_$id.json")
+    $stdout = Join-Path $env:TEMP ("cr_compat_$id.out")
+    $stderr = Join-Path $env:TEMP ("cr_compat_$id.err")
     try {
-        $null = & $Exe --dll $Dll --out $out --channel $Channel --version $Version 2>$null
-        $code = $LASTEXITCODE
+        $arguments = "--dll `"$Dll`" --out `"$out`" --channel $Channel --version $Version"
+        $proc = Start-Process -FilePath $Exe -ArgumentList $arguments -NoNewWindow -Wait -PassThru `
+            -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+        $code = $proc.ExitCode
         if (-not (Test-Path -LiteralPath $out)) {
-            throw "cr_compat_check no genero $out (exit $code)"
+            $detail = ''
+            if (Test-Path -LiteralPath $stderr) {
+                $detail = (Get-Content -LiteralPath $stderr -Raw -ErrorAction SilentlyContinue).Trim()
+            }
+            throw "cr_compat_check no genero $out (exit $code): $detail"
         }
         $report = Read-Json $out
         if (-not $report) { throw "cr_compat_check genero un JSON vacio (exit $code)" }
         return $report
     } finally {
-        if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Force -ErrorAction SilentlyContinue }
+        foreach ($path in @($out, $stdout, $stderr)) {
+            if (Test-Path -LiteralPath $path) {
+                Remove-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue
+            }
+        }
     }
 }
 
