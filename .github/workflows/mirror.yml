@@ -1,0 +1,52 @@
+name: mirror
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Mirror OpenSteamTool feeds
+        env:
+          UPSTREAM: https://github.com/madoiscool/steam-monitor.git
+        run: |
+          set -euo pipefail
+          git config user.name "steam-monitor bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin "+refs/heads/*:refs/remotes/origin/*"
+          for branch in pattern ipc protobuf; do
+            echo "::group::mirror $branch"
+            git fetch --no-tags "$UPSTREAM" \
+              "refs/heads/$branch:refs/remotes/upstream/$branch"
+            upstream_sha=$(git rev-parse "refs/remotes/upstream/$branch")
+            if git ls-remote --exit-code --heads origin "refs/heads/$branch" >/dev/null 2>&1; then
+              git push --force-with-lease="refs/heads/$branch:$(git rev-parse "refs/remotes/origin/$branch")" \
+                origin "refs/remotes/upstream/$branch:refs/heads/$branch"
+            else
+              git push origin "refs/remotes/upstream/$branch:refs/heads/$branch"
+            fi
+            remote_sha=$(git ls-remote origin "refs/heads/$branch" | cut -f1)
+            if [ "$upstream_sha" != "$remote_sha" ]; then
+              echo "::error::mirror mismatch for $branch: upstream=$upstream_sha remote=$remote_sha"
+              exit 1
+            fi
+            echo "$branch -> $remote_sha"
+            echo "::endgroup::"
+          done
