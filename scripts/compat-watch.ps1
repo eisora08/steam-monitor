@@ -261,7 +261,7 @@ function Update-Issue([string]$Sha, [string]$Channel, [int64]$Version, [string]$
     }
 }
 
-function Update-Index([string]$Sha, [string]$Channel, [int64]$Version, [string]$Status, $Report, $Headers) {
+function Update-Index([string]$Sha, [string]$Channel, [int64]$Version, [string]$Status, $Report, $Osl, $Headers) {
     $existing = Get-GitHubFile 'index.json' $Headers
     if ($existing -and $existing.json) { $index = $existing.json } else {
         $index = [pscustomobject]@{ schema = 1; builds = @(); latest = [pscustomobject]@{}; osl = [pscustomobject]@{} }
@@ -270,16 +270,17 @@ function Update-Index([string]$Sha, [string]$Channel, [int64]$Version, [string]$
     if (-not $index.latest) { $index | Add-Member -NotePropertyName latest -NotePropertyValue ([pscustomobject]@{}) -Force }
     if (-not $index.osl) { $index | Add-Member -NotePropertyName osl -NotePropertyValue ([pscustomobject]@{}) -Force }
 
+    $index.osl = $Osl
     $entry = [pscustomobject]@{
         sha256        = $Sha
         channel       = $Channel
         steam_version = $Version
         status        = $Status
         tested_at     = $script:UtcNow
-        osl           = $index.osl
+        osl           = $Osl
     }
     $builds = @($index.builds | Where-Object { $_.sha256 -ne $Sha })
-    $index.builds = @($entry) + $builds | Select-Object -First 50
+    $index.builds = @(@($entry) + $builds | Select-Object -First 50)
     $index | Add-Member -NotePropertyName updated_at -NotePropertyValue $script:UtcNow -Force
     $index.latest | Add-Member -NotePropertyName $Channel -NotePropertyValue ([pscustomobject]@{
         sha256 = $Sha; steam_version = $Version; status = $Status; tested_at = $script:UtcNow
@@ -367,11 +368,11 @@ try {
     $osl = [pscustomobject]@{
         pattern  = Test-RawFile "https://raw.githubusercontent.com/$($script:Cfg.feed_repo)/pattern/steamclient/$sha.toml"
         ipc      = Test-RawFile "https://raw.githubusercontent.com/$($script:Cfg.feed_repo)/ipc/steamclient/$sha.toml"
-        protobuf = Test-RawFile "https://raw.githubusercontent.com/$($script:Cfg.feed_repo)/protobuf/steamclient/$sha.toml"
+        protobuf = Test-RawFile "https://raw.githubusercontent.com/$($script:Cfg.feed_repo)/protobuf/steamclient/steammessages_base.proto"
     }
 
     Publish-GitHubFile "steamclient64/$sha.json" $json "compat: $channel $version $($sha.Substring(0,7)) $status" $headers
-    Update-Index $sha $channel $version $status $report $headers
+    Update-Index $sha $channel $version $status $report $osl $headers
     Update-Issue $sha $channel $version $status $report $headers
 
     Write-Json $statePath ([pscustomobject]@{
