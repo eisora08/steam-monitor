@@ -1,0 +1,11 @@
+{
+  "feed_repo": "eisora08/steam-monitor",
+  "branch": "compat",
+  "steam_path": "",
+  "check_exe": "%LOCALAPPDATA%\\CloudRedirectMonitor\\cr_compat_check.exe",
+  "pat_file": "%LOCALAPPDATA%\\CloudRedirectMonitor\\pat.clixml",
+  "state_file": "%LOCALAPPDATA%\\CloudRedirectMonitor\\state.json",
+  "log_file": "%LOCALAPPDATA%\\CloudRedirectMonitor\\watch.log",
+  "allow_unverified": true,
+  "issue_labels": ["compat"]
+}

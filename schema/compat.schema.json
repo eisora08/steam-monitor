@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/eisora08/steam-monitor/main/schema/compat.schema.json",
+  "title": "CloudRedirect compat report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "channel",
+    "steam_version",
+    "steamclient_sha256",
+    "tested_at",
+    "tool",
+    "status",
+    "fields",
+    "live"
+  ],
+  "properties": {
+    "schema": { "const": 1 },
+    "channel": { "enum": ["stable", "beta"] },
+    "steam_version": { "type": "integer", "minimum": 0 },
+    "steamclient_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "tested_at": { "type": "string", "format": "date-time" },
+    "tool": { "type": "string" },
+    "status": { "enum": ["full", "unverified", "audit", "blocked"] },
+    "reasons": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ok", "kind"],
+        "properties": {
+          "ok": { "type": "boolean" },
+          "kind": { "type": "string" },
+          "critical": { "type": "boolean" },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "live": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ok", "available"],
+      "properties": {
+        "ok": { "type": "boolean" },
+        "available": { "type": "boolean" },
+        "detail": { "type": "string" }
+      }
+    }
+  }
+}

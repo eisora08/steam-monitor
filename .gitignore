@@ -1,0 +1,6 @@
+config.json
+state.json
+*.clixml
+*.log
+bin/
+obj/
