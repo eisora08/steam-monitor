@@ -56,7 +56,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $steamDir = $env:ProgramFiles(x86) + "\Steam"
+          $steamDir = ${env:ProgramFiles(x86)} + "\Steam"
           if (-not (Test-Path "$steamDir\steamclient64.dll")) {
             $steamDir = $env:ProgramFiles + "\Steam"
           }
