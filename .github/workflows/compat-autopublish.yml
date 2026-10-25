@@ -46,7 +46,9 @@ jobs:
 
       - name: Build cr_compat_check
         run: |
-          cmake -S cr-src -B cr-src/build -G "Visual Studio 17 2022" -A x64
+          # No -G: runner images change their VS major version; CMake picks
+          # the newest installed generator, -A pins x64.
+          cmake -S cr-src -B cr-src/build -A x64
           cmake --build cr-src/build --config Release --target cr_compat_check
 
       - name: Locate Steam & best-effort client update
