@@ -12,6 +12,8 @@
   Imprime el JSON y no publica nada.
 .PARAMETER Force
   Ignora el state.json y vuelve a comprobar el mismo hash.
+  Con -Force tambien republica al feed aunque el archivo remoto ya tenga
+  el mismo status (sin -Force solo se refresca el state local).
 #>
 [CmdletBinding()]
 param(
@@ -65,14 +67,13 @@ function Get-Pat {
     if ($env:CR_MONITOR_PAT) { return $env:CR_MONITOR_PAT }
     $file = Expand-Path $script:Cfg.pat_file
     if (-not (Test-Path -LiteralPath $file)) {
-        throw "PAT no encontrado en $file. Guarda un PSCredential con Export-Clixml o define CR_MONITOR_PAT."
+        throw "PAT no encontrado en $file. Ejecuta scripts\set-pat.ps1 o define CR_MONITOR_PAT."
     }
     $cred = Import-Clixml -LiteralPath $file
-    if ($cred -is [System.Management.Automation.PSCredential]) {
-        return $cred.GetNetworkCredential().Password
+    if ($cred -isnot [System.Management.Automation.PSCredential]) {
+        throw "Formato de PAT no reconocido en $file. Vuelve a guardarlo con scripts\set-pat.ps1 (PSCredential)."
     }
-    if ($cred -is [string]) { return $cred }
-    throw "Formato de PAT no reconocido en $file"
+    return $cred.GetNetworkCredential().Password
 }
 
 function Get-SteamPath {
@@ -363,6 +364,22 @@ try {
         Invoke-RestMethod -Uri $branchUri -Headers $headers -Method Get -TimeoutSec 20 | Out-Null
     } catch {
         throw "La rama '$($script:Cfg.branch)' no existe en $($script:Cfg.feed_repo). Crea la rama compat primero."
+    }
+
+    # Idempotencia: si el feed ya contiene este SHA con el mismo status, no se
+    # genera ningun commit nuevo; solo se refresca el state local y se sale.
+    # (Evita el push redundante cuando el state.json local esta desactualizado
+    # pero el feed ya fue publicado, p.ej. por la tarea programada o por CI.)
+    # -Force salta esta comprobacion y republica igualmente.
+    if (-not $Force) {
+        $existing = Get-GitHubFile "steamclient64/$sha.json" $headers
+        if ($existing -and $existing.json -and $existing.json.status -eq $status) {
+            Write-Json $statePath ([pscustomobject]@{
+                sha256 = $sha; status = $status; checked_at = $script:UtcNow
+            })
+            Write-Log "Feed ya publicado para $sha (status=$status); nada nuevo, solo se actualizo el state local"
+            exit 0
+        }
     }
 
     $osl = [pscustomobject]@{

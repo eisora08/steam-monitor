@@ -1,0 +1,182 @@
+name: compat-autopublish
+
+# Best-effort complement to scripts/compat-watch.ps1 (the primary publisher,
+# which runs on the maintainer's PC with live verification and beta coverage).
+# This workflow runs cr_compat_check on the GitHub Windows runner's own Steam
+# install and publishes the verdict to the 'compat' branch so the DLL's feed
+# keeps working even when the maintainer's PC is off during a Steam update.
+#
+# Caveats by design:
+#   - runner Steam is a baked image snapshot; the update step is best-effort
+#   - stable channel only (the runner cannot opt into the client beta)
+#   - static report only (no live session), so 'full' mirrors the local
+#     scripts' allow_unverified=true policy
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: compat-autopublish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Check runner Steam & publish compat
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout feed (compat branch)
+        uses: actions/checkout@v4
+        with:
+          ref: compat
+
+      - name: Checkout CloudRedirect (cr_compat_check)
+        uses: actions/checkout@v4
+        with:
+          repository: eisora08/CloudRedirect
+          path: cr-src
+
+      - name: Set up Visual Studio
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build cr_compat_check
+        run: |
+          cmake -S cr-src -B cr-src/build -G "Visual Studio 17 2022" -A x64
+          cmake --build cr-src/build --config Release --target cr_compat_check
+
+      - name: Locate Steam & best-effort client update
+        id: steam
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $steamDir = $env:ProgramFiles(x86) + "\Steam"
+          if (-not (Test-Path "$steamDir\steamclient64.dll")) {
+            $steamDir = $env:ProgramFiles + "\Steam"
+          }
+          if (-not (Test-Path "$steamDir\steamclient64.dll")) {
+            Write-Host "::notice::Steam not present on this runner image; nothing to publish"
+            echo "present=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          echo "present=true" >> $env:GITHUB_OUTPUT
+          echo "dir=$steamDir" >> $env:GITHUB_OUTPUT
+
+          $dll = "$steamDir\steamclient64.dll"
+          # Launch Steam headless and wait (bounded) for the client DLL to stop
+          # changing. If it never updates, we simply publish what the image has.
+          $lastWrite = (Get-Item $dll).LastWriteTimeUtc
+          try {
+            Start-Process "$steamDir\steam.exe" -ArgumentList '-silent'
+          } catch {
+            Write-Host "::warning::could not launch steam.exe: $_"
+          }
+          $deadline = (Get-Date).AddMinutes(8)
+          $stableSince = $null
+          while ((Get-Date) -lt $deadline) {
+            Start-Sleep -Seconds 20
+            try { $now = (Get-Item $dll).LastWriteTimeUtc } catch { continue }
+            if ($now -gt $lastWrite) {
+              $lastWrite = $now
+              $stableSince = $null
+              Write-Host "steamclient64.dll changed; waiting for the update to settle"
+              continue
+            }
+            if (-not $stableSince) { $stableSince = Get-Date; continue }
+            if (((Get-Date) - $stableSince).TotalSeconds -ge 60) { break }
+          }
+          Get-Process steam -ErrorAction SilentlyContinue |
+            Stop-Process -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 5
+          Write-Host "Using $dll"
+
+      - name: Check & publish
+        if: steps.steam.outputs.present == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $steamDir = '${{ steps.steam.outputs.dir }}'
+          $dll = "$steamDir\steamclient64.dll"
+          $sha = (Get-FileHash $dll -Algorithm SHA256).Hash.ToLower()
+
+          if (Test-Path "steamclient64/$sha.json") {
+            Write-Host "::notice::compat for $sha already published; nothing to do"
+            exit 0
+          }
+
+          $ver = 0
+          $manifest = "$steamDir\package\steam_client_win64.manifest"
+          if (Test-Path $manifest) {
+            $raw = Get-Content $manifest -Raw
+            if ($raw -match '"version"\s+"(\d+)"') { $ver = [int64]$matches[1] }
+          }
+
+          $out = Join-Path $env:RUNNER_TEMP "compat.json"
+          & "cr-src\build\Release\cr_compat_check.exe" --dll $dll --out $out `
+            --channel stable --version $ver
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path $out)) {
+            Write-Host "::error::cr_compat_check failed (exit $LASTEXITCODE)"
+            exit 1
+          }
+
+          $check = Get-Content $out -Raw | ConvertFrom-Json
+          # Static-only CI: 'full' when the static report is full, mirroring the
+          # local scripts' allow_unverified=true policy.
+          $status = if ($check.status -eq 'full') { 'full' } else { 'audit' }
+          $now = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
+
+          $check | Add-Member -NotePropertyName channel -NotePropertyValue 'stable' -Force
+          $check | Add-Member -NotePropertyName steam_version -NotePropertyValue $ver -Force
+          $check | Add-Member -NotePropertyName tested_at -NotePropertyValue $now -Force
+          $check | Add-Member -NotePropertyName status -NotePropertyValue $status -Force
+          $check | Add-Member -NotePropertyName live -NotePropertyValue ([pscustomobject]@{
+            ok = $false; available = $false; detail = 'CI runner (static report only)'
+          }) -Force
+          $check | Add-Member -NotePropertyName ci -NotePropertyValue $true -Force
+          New-Item -ItemType Directory -Force -Path steamclient64 | Out-Null
+          $check | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath "steamclient64/$sha.json" -Encoding UTF8
+
+          # index.json: builds ring (50) + latest per channel + OSL coverage.
+          $index = @{ schema = 1; builds = @(); latest = @{}; osl = @{} }
+          if (Test-Path index.json) {
+            try { $index = Get-Content index.json -Raw | ConvertFrom-Json -AsHashtable } catch {}
+          }
+          function Test-Raw([string]$Url) {
+            try {
+              $r = Invoke-WebRequest -Uri $Url -Method Head -UseBasicParsing -TimeoutSec 10
+              return ($r.StatusCode -eq 200)
+            } catch { return $false }
+          }
+          $osl = @{
+            pattern  = Test-Raw "https://raw.githubusercontent.com/eisora08/steam-monitor/pattern/steamclient/$sha.toml"
+            ipc      = Test-Raw "https://raw.githubusercontent.com/eisora08/steam-monitor/ipc/steamclient/$sha.toml"
+            protobuf = Test-Raw "https://raw.githubusercontent.com/eisora08/steam-monitor/protobuf/steamclient/steammessages_base.proto"
+          }
+          $entry = [pscustomobject]@{
+            sha256 = $sha; channel = 'stable'; steam_version = $ver
+            status = $status; tested_at = $now; osl = $osl
+          }
+          $builds = @($index.builds | Where-Object { $_.sha256 -ne $sha })
+          $index.builds = @(@($entry) + $builds | Select-Object -First 50)
+          $index.updated_at = $now
+          if (-not $index.latest) { $index.latest = @{} }
+          $index.latest.stable = [pscustomobject]@{
+            sha256 = $sha; steam_version = $ver; status = $status; tested_at = $now
+          }
+          $index.osl = $osl
+          $index | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath index.json -Encoding UTF8
+
+          git config user.name "steam-monitor bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "steamclient64/$sha.json" index.json
+          if (git diff --cached --quiet) {
+            Write-Host "::notice::no changes to publish"
+            exit 0
+          }
+          git commit -m "compat: stable $ver $($sha.Substring(0,7)) $status (CI)"
+          git push
+          Write-Host "::notice::published compat for $sha ($status)"
