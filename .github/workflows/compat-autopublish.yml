@@ -69,7 +69,11 @@ jobs:
             $setup = Join-Path $env:RUNNER_TEMP "SteamSetup.exe"
             try {
               Invoke-WebRequest -Uri "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe" -OutFile $setup -UseBasicParsing
-              Start-Process -FilePath $setup -ArgumentList '/S', '/D=C:\Steam' -Wait -WindowStyle Hidden
+              Write-Host "Downloaded SteamSetup.exe ($((Get-Item $setup).Length) bytes)"
+              $proc = Start-Process -FilePath $setup -ArgumentList '/S', '/D=C:\Steam' -PassThru -WindowStyle Hidden
+              $proc.WaitForExit(300000)
+              Write-Host "SteamSetup exited with code $($proc.ExitCode)"
+              Start-Sleep -Seconds 10
             } catch {
               Write-Host "::warning::SteamSetup failed: $_"
             }
