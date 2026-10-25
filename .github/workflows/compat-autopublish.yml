@@ -7,7 +7,8 @@ name: compat-autopublish
 # keeps working even when the maintainer's PC is off during a Steam update.
 #
 # Caveats by design:
-#   - runner Steam is a baked image snapshot; the update step is best-effort
+#   - runner images ship no Steam; this workflow installs + bootstraps it
+#     (best effort) on every run
 #   - stable channel only (the runner cannot opt into the client beta)
 #   - static report only (no live session), so 'full' mirrors the local
 #     scripts' allow_unverified=true policy
@@ -51,41 +52,57 @@ jobs:
           cmake -S cr-src -B cr-src/build -A x64
           cmake --build cr-src/build --config Release --target cr_compat_check
 
-      - name: Locate Steam & best-effort client update
+      - name: Ensure runner Steam client (install/update, best effort)
         id: steam
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $steamDir = ${env:ProgramFiles(x86)} + "\Steam"
-          if (-not (Test-Path "$steamDir\steamclient64.dll")) {
-            $steamDir = $env:ProgramFiles + "\Steam"
+          $candidates = @(
+            ${env:ProgramFiles(x86)} + "\Steam",
+            $env:ProgramFiles + "\Steam",
+            "C:\Steam"
+          )
+          $steamDir = $candidates | Where-Object { Test-Path "$_\steamclient64.dll" } | Select-Object -First 1
+
+          if (-not $steamDir) {
+            Write-Host "::notice::Steam not on this runner image; installing silently (best effort)"
+            $setup = Join-Path $env:RUNNER_TEMP "SteamSetup.exe"
+            try {
+              Invoke-WebRequest -Uri "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe" -OutFile $setup -UseBasicParsing
+              Start-Process -FilePath $setup -ArgumentList '/S', '/D=C:\Steam' -Wait -WindowStyle Hidden
+            } catch {
+              Write-Host "::warning::SteamSetup failed: $_"
+            }
+            $steamDir = $candidates | Where-Object { Test-Path "$_\steam.exe" } | Select-Object -First 1
           }
-          if (-not (Test-Path "$steamDir\steamclient64.dll")) {
-            Write-Host "::notice::Steam not present on this runner image; nothing to publish"
+
+          if (-not $steamDir) {
+            Write-Host "::notice::Steam could not be installed; nothing to publish this run"
             echo "present=false" >> $env:GITHUB_OUTPUT
             exit 0
           }
-          echo "present=true" >> $env:GITHUB_OUTPUT
-          echo "dir=$steamDir" >> $env:GITHUB_OUTPUT
 
           $dll = "$steamDir\steamclient64.dll"
-          # Launch Steam headless and wait (bounded) for the client DLL to stop
-          # changing. If it never updates, we simply publish what the image has.
-          $lastWrite = (Get-Item $dll).LastWriteTimeUtc
+          $manifest = "$steamDir\package\steam_client_win64.manifest"
           try {
             Start-Process "$steamDir\steam.exe" -ArgumentList '-silent'
           } catch {
             Write-Host "::warning::could not launch steam.exe: $_"
           }
-          $deadline = (Get-Date).AddMinutes(8)
+          $deadline = (Get-Date).AddMinutes(15)
+          $seen = $null
           $stableSince = $null
           while ((Get-Date) -lt $deadline) {
-            Start-Sleep -Seconds 20
-            try { $now = (Get-Item $dll).LastWriteTimeUtc } catch { continue }
-            if ($now -gt $lastWrite) {
-              $lastWrite = $now
+            Start-Sleep -Seconds 15
+            if (-not (Test-Path $dll)) { continue }
+            try {
+              $sig = (Get-Item $dll).LastWriteTimeUtc.Ticks
+              $sig = "$sig/" + $(if (Test-Path $manifest) { (Get-Item $manifest).LastWriteTimeUtc.Ticks } else { 0 })
+            } catch { continue }
+            if ($sig -ne $seen) {
+              $seen = $sig
               $stableSince = $null
-              Write-Host "steamclient64.dll changed; waiting for the update to settle"
+              Write-Host "client files still changing; waiting for the update to settle"
               continue
             }
             if (-not $stableSince) { $stableSince = Get-Date; continue }
@@ -94,6 +111,14 @@ jobs:
           Get-Process steam -ErrorAction SilentlyContinue |
             Stop-Process -Force -ErrorAction SilentlyContinue
           Start-Sleep -Seconds 5
+
+          if (-not (Test-Path $dll)) {
+            Write-Host "::notice::steamclient64.dll never appeared; nothing to publish"
+            echo "present=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          echo "present=true" >> $env:GITHUB_OUTPUT
+          echo "dir=$steamDir" >> $env:GITHUB_OUTPUT
           Write-Host "Using $dll"
 
       - name: Check & publish
