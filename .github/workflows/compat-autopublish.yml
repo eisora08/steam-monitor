@@ -64,31 +64,13 @@ jobs:
           )
           $steamDir = $candidates | Where-Object { Test-Path "$_\steamclient64.dll" } | Select-Object -First 1
 
+          # GitHub-hosted Windows runners do NOT ship Steam and the SteamSetup
+          # bootstrapper does not complete silently in this sandbox, so CI
+          # cannot obtain a current steamclient64.dll on its own. The workflow
+          # gracefully skips; pattern/compat generation happens on the
+          # maintainer's PC via scripts/CompatAhora.bat.
           if (-not $steamDir) {
-            Write-Host "::notice::Steam not on this runner image; installing silently (best effort)"
-            $setup = Join-Path $env:RUNNER_TEMP "SteamSetup.exe"
-            try {
-              Invoke-WebRequest -Uri "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe" -OutFile $setup -UseBasicParsing
-              Write-Host "Downloaded SteamSetup.exe ($((Get-Item $setup).Length) bytes)"
-              $proc = Start-Process -FilePath $setup -ArgumentList '/S', '/D=C:\Steam' -PassThru -WindowStyle Hidden
-              $proc.WaitForExit(300000)
-              Write-Host "SteamSetup exited with code $($proc.ExitCode)"
-              Start-Sleep -Seconds 10
-              if (-not (Test-Path 'C:\Steam\steam.exe')) {
-                $found = Get-ChildItem -Path 'C:\' -Filter 'steam.exe' -Recurse -ErrorAction SilentlyContinue -Depth 4 | Select-Object -First 1
-                if ($found) {
-                  $steamDir = $found.DirectoryName
-                  Write-Host "Steam found at $steamDir (installer ignored /D=)"
-                }
-              }
-            } catch {
-              Write-Host "::warning::SteamSetup failed: $_"
-            }
-            $steamDir = $candidates | Where-Object { Test-Path "$_\steam.exe" } | Select-Object -First 1
-          }
-
-          if (-not $steamDir) {
-            Write-Host "::notice::Steam could not be installed; nothing to publish this run"
+            Write-Host "::notice::Steam not present on this runner image; skipping this run"
             echo "present=false" >> $env:GITHUB_OUTPUT
             exit 0
           }
