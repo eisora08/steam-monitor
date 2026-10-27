@@ -1,0 +1,398 @@
+{
+    "steamclient_sha256":  "676e04ad52e57961fe7a99de56379cdfb64e169c7f9cc1a37a36d6ac34e8309c",
+    "schema":  1,
+    "build_id":  "0",
+    "dll_version":  "",
+    "tool":  "cr_compat_check/0.1",
+    "allowlisted":  false,
+    "subsystems":  {
+                       "cloud":  false,
+                       "kv":  false,
+                       "manifest":  true,
+                       "playtime":  false
+                   },
+    "reasons":  [
+                    "globalEngine",
+                    "engineOffsets",
+                    "flushAppMinutesPlayed",
+                    "getUserStatsVtable",
+                    "appInfoCacheOffset",
+                    "getAppInfo"
+                ],
+    "fields":  {
+                   "getUserStatsDesc":  {
+                                            "ok":  true,
+                                            "kind":  "descriptor",
+                                            "critical":  true,
+                                            "subsystems":  [
+                                                               "playtime"
+                                                           ]
+                                        },
+                   "image":  {
+                                 "ok":  true,
+                                 "kind":  "pe",
+                                 "critical":  true,
+                                 "subsystems":  [
+                                                    "cloud",
+                                                    "manifest",
+                                                    "playtime",
+                                                    "kv"
+                                                ]
+                             },
+                   "releaseWrapped":  {
+                                          "ok":  true,
+                                          "kind":  "func",
+                                          "critical":  true,
+                                          "subsystems":  [
+                                                             "cloud"
+                                                         ]
+                                      },
+                   "ccmInterfaceVtable":  {
+                                              "ok":  true,
+                                              "kind":  "vtable",
+                                              "critical":  true,
+                                              "subsystems":  [
+                                                                 "cloud"
+                                                             ]
+                                          },
+                   "serviceTransportVtable":  {
+                                                  "ok":  true,
+                                                  "kind":  "vtable",
+                                                  "critical":  true,
+                                                  "subsystems":  [
+                                                                     "cloud"
+                                                                 ]
+                                              },
+                   "getAppMinutesPlayedData":  {
+                                                   "ok":  true,
+                                                   "kind":  "func",
+                                                   "critical":  true,
+                                                   "subsystems":  [
+                                                                      "playtime"
+                                                                  ]
+                                               },
+                   "globalEngine":  {
+                                        "ok":  false,
+                                        "kind":  "global",
+                                        "critical":  true,
+                                        "subsystems":  [
+                                                           "cloud",
+                                                           "playtime",
+                                                           "kv"
+                                                       ]
+                                    },
+                   "bRouteMsgToJob":  {
+                                          "ok":  true,
+                                          "kind":  "func",
+                                          "critical":  true,
+                                          "subsystems":  [
+                                                             "cloud"
+                                                         ]
+                                      },
+                   "wrapPacket":  {
+                                      "ok":  true,
+                                      "kind":  "func",
+                                      "critical":  true,
+                                      "subsystems":  [
+                                                         "cloud"
+                                                     ]
+                                  },
+                   "bAsyncSend":  {
+                                      "ok":  true,
+                                      "kind":  "func",
+                                      "critical":  true,
+                                      "subsystems":  [
+                                                         "playtime"
+                                                     ]
+                                  },
+                   "parseFromArray":  {
+                                          "ok":  true,
+                                          "kind":  "func",
+                                          "critical":  true,
+                                          "subsystems":  [
+                                                             "cloud",
+                                                             "playtime"
+                                                         ]
+                                      },
+                   "appInfoCacheOffset":  {
+                                              "ok":  false,
+                                              "kind":  "offset",
+                                              "critical":  true,
+                                              "subsystems":  [
+                                                                 "kv"
+                                                             ]
+                                          },
+                   "getUserStatsVtable":  {
+                                              "ok":  false,
+                                              "kind":  "vtable",
+                                              "critical":  true,
+                                              "subsystems":  [
+                                                                 "playtime"
+                                                             ]
+                                          },
+                   "serializeToArray":  {
+                                            "ok":  true,
+                                            "kind":  "func",
+                                            "critical":  true,
+                                            "subsystems":  [
+                                                               "cloud",
+                                                               "playtime"
+                                                           ]
+                                        },
+                   "refCountHelper":  {
+                                          "ok":  true,
+                                          "kind":  "func",
+                                          "critical":  true,
+                                          "subsystems":  [
+                                                             "cloud"
+                                                         ]
+                                      },
+                   "kvSetString":  {
+                                       "ok":  true,
+                                       "kind":  "func",
+                                       "critical":  true,
+                                       "subsystems":  [
+                                                          "kv"
+                                                      ]
+                                   },
+                   "findJob":  {
+                                   "ok":  true,
+                                   "kind":  "func",
+                                   "critical":  true,
+                                   "subsystems":  [
+                                                      "cloud"
+                                                  ]
+                               },
+                   "engineOffsets":  {
+                                         "ok":  false,
+                                         "kind":  "offset",
+                                         "critical":  true,
+                                         "subsystems":  [
+                                                            "cloud",
+                                                            "playtime"
+                                                        ]
+                                     },
+                   "engineOffJobMgr":  {
+                                           "ok":  false,
+                                           "kind":  "optional-offset",
+                                           "critical":  false,
+                                           "subsystems":  [
+
+                                                          ]
+                                       },
+                   "respWrapperVtable":  {
+                                             "ok":  true,
+                                             "kind":  "vtable",
+                                             "critical":  true,
+                                             "subsystems":  [
+                                                                "playtime"
+                                                            ]
+                                         },
+                   "ccmOffConnContext":  {
+                                             "ok":  false,
+                                             "kind":  "optional-offset",
+                                             "critical":  false,
+                                             "subsystems":  [
+
+                                                            ]
+                                         },
+                   "userOffCcmInterface":  {
+                                               "ok":  false,
+                                               "kind":  "optional-offset",
+                                               "critical":  false,
+                                               "subsystems":  [
+
+                                                              ]
+                                           },
+                   "pbMsgCtor":  {
+                                     "ok":  true,
+                                     "kind":  "func",
+                                     "critical":  true,
+                                     "subsystems":  [
+                                                        "playtime"
+                                                    ]
+                                 },
+                   "accountIdOffset":  {
+                                           "ok":  true,
+                                           "kind":  "offset",
+                                           "critical":  true,
+                                           "detail":  "522",
+                                           "subsystems":  [
+                                                              "cloud",
+                                                              "playtime",
+                                                              "kv"
+                                                          ]
+                                       },
+                   "getAppInfo":  {
+                                      "ok":  false,
+                                      "kind":  "func",
+                                      "critical":  true,
+                                      "subsystems":  [
+                                                         "kv"
+                                                     ]
+                                  },
+                   "respDescriptor":  {
+                                          "ok":  true,
+                                          "kind":  "descriptor",
+                                          "critical":  true,
+                                          "subsystems":  [
+                                                             "playtime"
+                                                         ]
+                                      },
+                   "messageLayout":  {
+                                         "ok":  true,
+                                         "kind":  "offset",
+                                         "critical":  true,
+                                         "detail":  "header/body verified",
+                                         "subsystems":  [
+                                                            "cloud",
+                                                            "playtime"
+                                                        ]
+                                     },
+                   "regKeySyncTime":  {
+                                          "ok":  true,
+                                          "kind":  "global",
+                                          "critical":  true,
+                                          "subsystems":  [
+                                                             "playtime"
+                                                         ]
+                                      },
+                   "buildDepotDependency":  {
+                                                "ok":  true,
+                                                "kind":  "func",
+                                                "critical":  true,
+                                                "subsystems":  [
+                                                                   "manifest"
+                                                               ]
+                                            },
+                   "pbMsgFinalize":  {
+                                         "ok":  true,
+                                         "kind":  "func",
+                                         "critical":  true,
+                                         "subsystems":  [
+                                                            "playtime"
+                                                        ]
+                                     },
+                   "readConfigU64":  {
+                                         "ok":  true,
+                                         "kind":  "func",
+                                         "critical":  true,
+                                         "subsystems":  [
+                                                            "kv"
+                                                        ]
+                                     },
+                   "pbMsgCleanup":  {
+                                        "ok":  true,
+                                        "kind":  "func",
+                                        "critical":  true,
+                                        "subsystems":  [
+                                                           "playtime"
+                                                       ]
+                                    },
+                   "kvGetUint64":  {
+                                       "ok":  true,
+                                       "kind":  "func",
+                                       "critical":  true,
+                                       "subsystems":  [
+                                                          "kv"
+                                                      ]
+                                   },
+                   "yieldIfTimeSlice":  {
+                                            "ok":  true,
+                                            "kind":  "func",
+                                            "critical":  true,
+                                            "subsystems":  [
+                                                               "playtime"
+                                                           ]
+                                        },
+                   "flushAppMinutesPlayed":  {
+                                                 "ok":  false,
+                                                 "kind":  "func",
+                                                 "critical":  true,
+                                                 "subsystems":  [
+                                                                    "playtime"
+                                                                ]
+                                             },
+                   "setAppLastPlayedTime":  {
+                                                "ok":  true,
+                                                "kind":  "func",
+                                                "critical":  true,
+                                                "subsystems":  [
+                                                                   "playtime"
+                                                               ]
+                                            },
+                   "playtimeWriter":  {
+                                          "ok":  true,
+                                          "kind":  "func",
+                                          "critical":  true,
+                                          "subsystems":  [
+                                                             "playtime"
+                                                         ]
+                                      },
+                   "jobCurGlobal":  {
+                                        "ok":  true,
+                                        "kind":  "global",
+                                        "critical":  true,
+                                        "subsystems":  [
+                                                           "playtime"
+                                                       ]
+                                    },
+                   "refCountGlobal":  {
+                                          "ok":  true,
+                                          "kind":  "global",
+                                          "critical":  true,
+                                          "subsystems":  [
+                                                             "playtime"
+                                                         ]
+                                      },
+                   "getSection":  {
+                                      "ok":  true,
+                                      "kind":  "func",
+                                      "critical":  true,
+                                      "subsystems":  [
+                                                         "kv"
+                                                     ]
+                                  },
+                   "kvFindKey":  {
+                                     "ok":  true,
+                                     "kind":  "func",
+                                     "critical":  true,
+                                     "subsystems":  [
+                                                        "kv"
+                                                    ]
+                                 },
+                   "kvGetInt":  {
+                                    "ok":  true,
+                                    "kind":  "func",
+                                    "critical":  true,
+                                    "subsystems":  [
+                                                       "kv"
+                                                   ]
+                                },
+                   "kvSetUint64":  {
+                                       "ok":  true,
+                                       "kind":  "func",
+                                       "critical":  true,
+                                       "subsystems":  [
+                                                          "kv"
+                                                      ]
+                                   },
+                   "kvSetInt":  {
+                                    "ok":  true,
+                                    "kind":  "func",
+                                    "critical":  true,
+                                    "subsystems":  [
+                                                       "kv"
+                                                   ]
+                                }
+               },
+    "channel":  "stable",
+    "steam_version":  0,
+    "tested_at":  "2026-10-27T19:12:44Z",
+    "status":  "audit",
+    "live":  {
+                 "ok":  false,
+                 "available":  false,
+                 "detail":  "static report only"
+             }
+}
