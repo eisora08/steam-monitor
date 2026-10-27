@@ -1,0 +1,157 @@
+# Auto-generated FULL pattern file for steamclient64.dll (SHA 253e0a11a4415b38c78a42f7bdd6ecc426455f06c1ba6453a48090df3142dbbc)
+[[patterns]]
+name = "GetAppInfo"
+pattern = "448b4168448bca4183f8ff744e4c8b99"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "GetSection"
+pattern = "4883ec288d42fe83f8120f87b8000000"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "ReadConfigU64"
+pattern = "48895c2408574883ec20498bd9418bf8e86befffff4885c074348bd7488bc8e8"
+mask = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+len = 32
+
+[[patterns]]
+name = "FlushAppMinutesPlayed"
+pattern = "40555741564883ec30488b05f8b2e200"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "GetAppMinutesPlayedData"
+pattern = "895424104883ec58488b0581be7a0048"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "SetAppLastPlayedTime"
+pattern = "81fa010300000f846801000048895c24"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "PlaytimeWriter"
+pattern = "48895c242055564154415541574883ec"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "ParseFromArray"
+pattern = "48895c2410488974241855574156488d6c24b94881eca0000000488b05ff57b5"
+mask = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+len = 32
+
+[[patterns]]
+name = "SerializeToArray"
+pattern = "48895c24185556574881ec9000000048"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "WrapPacket"
+pattern = "48895c242055574154488d6c24b94881"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "BRouteMsgToJob"
+pattern = "894c240855574154415541564157488d"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "ReleaseWrapped"
+pattern = "40534883ec208b4108488bd9ffc83dfe"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "RefCountHelper"
+pattern = "488b01f048ff00c3cccccccccccccccc"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "FindJob"
+pattern = "405355565741564883ec20837944004c8bf2488bf9745f8b71108b2affce8bde"
+mask = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+len = 32
+
+[[patterns]]
+name = "BuildDepotDependency"
+pattern = "488bc44c894820895010488948085548"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "BAsyncSend"
+pattern = "48895c241048896c2418565741564883ec50488b05571647008bea4c8bf1448b"
+mask = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+len = 32
+
+[[patterns]]
+name = "PbMsgCtor"
+pattern = "48895c2408574883ec30488bf9c64424"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "PbMsgFinalize"
+pattern = "40534883ec204883793800488bd97428"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "PbMsgCleanup"
+pattern = "48895c2408574883ec2080791900488d"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "YieldIfTimeSlice"
+pattern = "48895c24084889742410574883ec20483b0d8a9ab200498bd8488bf2488bf974"
+mask = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+len = 32
+
+[[patterns]]
+name = "KvFindKey"
+pattern = "488bc44c894820574881ec6004000048"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "KvGetUint64"
+pattern = "48895c2410574883ec204d85c0488d5c2430488bfa4c8bc9490f45d84533d24489134885c90f84270100008b51108bc2c1e81983e00f83f80a0f87050100004c"
+mask = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+len = 64
+
+[[patterns]]
+name = "KvGetInt"
+pattern = "48895c2410574883ec304d85c0488d7c"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "KvSetUint64"
+pattern = "4885c9743048895c2408574883ec2048"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "KvSetInt"
+pattern = "4885c9742e48895c2408574883ec208b"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
+[[patterns]]
+name = "KvSetString"
+pattern = "4885c90f849e00000048897424105748"
+mask = "xxxxxxxxxxxxxxxx"
+len = 16
+
